@@ -18,7 +18,25 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  res.status(200).send('hello from the GET /posts/:id endpoint');
+    console.log(req.params.id);
+    let id = req.params.id;
+        db.findById(id)
+            .then(post => {
+                res.status(200).json(post)
+            })
+            .catch(err =>{
+                res.status(500).json({err : "ID could not be found"})
+            })
+});
+
+router.get('/:id/comments', (req, res) => {
+    db.findPostComments()
+        .then(comments => {
+            res.status(200).json(comments)
+        })
+        .catch(err =>{
+            res.status(500).json({err : "Could not load comments"})
+        })
 });
 
 router.post('/', (req, res) => {
