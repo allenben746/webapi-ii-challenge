@@ -1,12 +1,9 @@
-// inside /users/userRoutes.js <- this can be place anywhere and called anything
-
 const express = require('express');
 const db = require('../data/db');
 
-const router = express.Router(); // notice the Uppercase R
+const router = express.Router();
 
-// this file will only be used when the route begins with "/users"
-// so we can remove that from the URLs, so "/users" becomes simply "/"
+//Get requests//
 router.get('/', (req, res) => {
   db.find()
     .then(posts => {
@@ -38,12 +35,62 @@ router.get('/:id/comments', (req, res) => {
             res.status(500).json({err : "Could not load comments"})
         })
 });
+//Get requests//
+//Post requests//
+router.post(`/api/posts`, (req, res) => {
+    const title = req.params.title; //required
+    const contents = req.params.contents; //required
+    const createdAt = req.params.created_at;
+    const updatedAt = req.params.updated_at;
 
-router.post('/', (req, res) => {
-  res.status(200).send('hello from the POST /users endpoint');
-});
+    //Checks to see if title or contents exist
+    if(!title || !contents){
+        res.status(400).json({ errorMessage: "Please provide title and contents for the post." })
+    }
+    else{
+        db.insert(req.body)
+            .then(post => {
+                res.status(201).json({post})
+            })
+            .catch(err => {
+                res.status(500).json({err : "Could not insert post. Check post structure & try again."})
+            })
+    }
+})
+router.post('/api/posts/:id/comments', (req, res) => {
+    const postId = req.params.id;
+    const comment = req.body
+    comment.post_id = postId
 
-// .. and any other endpoint related to the users resource
 
-// after the route has been fully configured, then we export it so it can be required where needed
-module.exports = router; // it is recommended that this be the last line on the file
+    db.findById(postId) 
+        .then(posts => {
+            if(posts.length > 0) {
+                if (comment.text) {
+                    db.insertComment(comment) 
+                        .then(result => {
+                            db.findCommentById(result.id)
+                                .then(result => {
+                                    res.status(201).json(result)
+                                })
+                                .catch(err => {
+                                    console.log(err) 
+                                })
+                        })
+                        .catch(err => {
+                            res.status(500).json({ error: "There was an error while saving the comment to the database" })
+                        })
+                } else {
+                    res.status(400).json({ errorMessage: "Please provide text for the comment." })
+                }
+            } else {
+                res.status(404).json({ message: "The post with the specified ID does not exist." }) 
+            }
+        })
+
+})
+//Post requests//
+
+
+
+module.exports = router;
