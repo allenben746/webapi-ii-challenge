@@ -58,39 +58,33 @@ router.post(`/api/posts`, (req, res) => {
     }
 })
 router.post('/api/posts/:id/comments', (req, res) => {
-    const postId = req.params.id;
-    const comment = req.body
-    comment.post_id = postId
-
-
-    db.findById(postId) 
-        .then(posts => {
-            if(posts.length > 0) {
-                if (comment.text) {
-                    db.insertComment(comment) 
-                        .then(result => {
-                            db.findCommentById(result.id)
-                                .then(result => {
-                                    res.status(201).json(result)
-                                })
-                                .catch(err => {
-                                    console.log(err) 
-                                })
-                        })
-                        .catch(err => {
-                            res.status(500).json({ error: "There was an error while saving the comment to the database" })
-                        })
-                } else {
-                    res.status(400).json({ errorMessage: "Please provide text for the comment." })
-                }
-            } else {
-                res.status(404).json({ message: "The post with the specified ID does not exist." }) 
-            }
-        })
-
+    // const text = req.params.text;
+    // const postID = req.params.post_id;
+    // const createdAt = req.params.created_at;
+    // const updatedAt = req.params.updated_at;
+    const comment = req.body;
+    if(!comment.postID){
+        res.status(404).json({ message: "The post with the specified ID does not exist." })
+    }
+    else if(!comment.text){
+        res.status(400).json({ errorMessage: "Please provide text for the comment." })
+    }
+    else if(comment.postID && comment.text){
+        db.insertComment(comment)
+            .then(result => {
+                res.status(201).json(result)
+            })
+            .catch(err => {
+                res.status(500).json({err : "Could not insert comment. Check post structure & try again."})
+            })
+    }
+    }
 })
 //Post requests//
 
 
+If the _post_ with the specified `id` is not found:
 
+  - return HTTP status code `404` (Not Found).
+  - return the following JSON object: `{ message: "The post with the specified ID does not exist." }`.
 module.exports = router;
