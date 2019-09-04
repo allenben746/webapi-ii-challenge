@@ -37,7 +37,7 @@ router.get('/:id/comments', (req, res) => {
 });
 //Get requests//
 //Post requests//
-router.post(`/api/posts`, (req, res) => {
+router.post(`/`, (req, res) => {
     const title = req.params.title; //required
     const contents = req.params.contents; //required
     const createdAt = req.params.created_at;
@@ -57,7 +57,7 @@ router.post(`/api/posts`, (req, res) => {
             })
     }
 })
-router.post('/api/posts/:id/comments', (req, res) => {
+router.post('/:id/comments', (req, res) => {
     // const text = req.params.text;
     // const postID = req.params.post_id;
     // const createdAt = req.params.created_at;
@@ -79,12 +79,63 @@ router.post('/api/posts/:id/comments', (req, res) => {
             })
     }
     }
-})
+)
 //Post requests//
-
-
-If the _post_ with the specified `id` is not found:
-
-  - return HTTP status code `404` (Not Found).
-  - return the following JSON object: `{ message: "The post with the specified ID does not exist." }`.
+//Delete requests//
+router.delete('/:id', (req,res => {
+    const id = req.params.id;
+    if(!comment.postID){
+        res.status(404).json({ message: "The post with the specified ID does not exist." })
+    }
+    else{
+        db.remove(id)
+            .then(deleted => {
+                if(deleted){
+                    res.status(200).json({message : "Deleted", deleted})
+                }
+            })
+            .catch(err => {
+                res.setEncoding(500).json({
+                    error: "The pose is unable to be removed"
+                })
+            })
+    }
+}))
+//Delete requests//
+//Put requests//
+server.put("/:id", (req, res) => {
+    const id = req.params.id;
+    const update = req.body;
+  
+    if (!update.title && !update.contents)
+      res.status(400).json({
+        errorMessage: "Please provide title and contents for the post."
+      });
+    else {
+      db.update(id, update)
+        .then(updated => {
+          if (updated) {
+            db.findById(id)
+              .then(post => {
+                res.status(200).json({ api: "update working", post });
+              })
+              .catch(error => {
+                res.send(500).json({
+                  error: "The user information could not be modified."
+                });
+              });
+          } else {
+            res.status(404).json({
+              message: "The user with the specified ID does not exist."
+            });
+          }
+        })
+        .catch(error => {
+          res.send(500).json({
+            error: "The user information could not be modified."
+          });
+        });
+    }
+  });
+//Put requests//
 module.exports = router;
